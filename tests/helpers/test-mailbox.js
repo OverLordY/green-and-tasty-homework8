@@ -18,7 +18,7 @@ function selectConfirmationLink(text, orderId, expectedOrigin) {
 async function waitForConfirmationLink({ orderId, expectedOrigin, since, timeoutMs = 180000 }) {
   if (!process.env.GUEST_EMAIL || !process.env.GMAIL_APP_PASSWORD) throw new Error('Guest mailbox credentials are missing');
   const client = new ImapFlow({ host: 'imap.gmail.com', port: 993, secure: true,
-    auth: { user: process.env.GUEST_EMAIL, pass: process.env.GMAIL_APP_PASSWORD }, logger: false });
+    auth: { user: process.env.GUEST_EMAIL.trim(), pass: process.env.GMAIL_APP_PASSWORD.replace(/\s/g, '') }, logger: false });
   client.on('error', () => {});
   try {
     await client.connect();
