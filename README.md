@@ -21,4 +21,6 @@ screenshots and videos are disabled because test pages may contain access links.
 
 The project is a test environment. Authenticated E2E coverage must use isolated
 fixtures and an approved way to obtain guest confirmations without publishing
-credentials, tokens, or personal links. No CI run has been performed yet.
+credentials, tokens, or personal links. The two pipeline jobs completed
+successfully on GitHub Actions: deployed smoke checks and the application's
+backend test suite. The authenticated Level 3 UI journey remains unfinished.
