@@ -2,6 +2,8 @@ const { test, expect } = require('@playwright/test');
 
 // Submitted reservations cannot be cancelled through the application.
 test.skip(process.env.RUN_SUBMIT_LIVE !== '1', 'Opt in to create a persistent, uniquely timed test reservation.');
+// Never silently submit a second persistent reservation during a CI retry.
+test.describe.configure({ retries: 0 });
 
 test('@level3 owner submits and waiter sees only confirmed dishes', async ({ browser, request }) => {
   test.setTimeout(600000);
@@ -28,10 +30,14 @@ test('@level3 owner submits and waiter sees only confirmed dishes', async ({ bro
   const owner = await login('OWNER');
   let id, submitted = false;
   try {
-    const locations = await (await request.get(`${base}/locations`)).json();
+    const locationsResponse = await request.get(`${base}/locations`);
+    expect(locationsResponse.status()).toBe(200);
+    const locations = await locationsResponse.json();
     const location = locations.find(item => item.address === '9 Abashidze Street');
     expect(location).toBeTruthy();
-    const tables = await (await request.get(`${base}/available-tables?capacity=2&locationId=${encodeURIComponent(location.id)}`)).json();
+    const tablesResponse = await request.get(`${base}/available-tables?capacity=2&locationId=${encodeURIComponent(location.id)}`);
+    expect(tablesResponse.status()).toBe(200);
+    const tables = await tablesResponse.json();
     const table = tables.find(item => item.capacity >= 2);
     expect(table).toBeTruthy();
     for (let attempt = 0; attempt < 12; attempt++) {

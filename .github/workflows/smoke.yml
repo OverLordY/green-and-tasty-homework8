@@ -100,7 +100,8 @@ jobs:
             test-results/junit.xml
           retention-days: 7
   owner-waiter-live:
-    if: github.event_name == 'workflow_dispatch' && inputs.run_owner_waiter_live
+    needs: [smoke, owner-live]
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.run_owner_waiter_live && needs.smoke.result == 'success' && (needs.owner-live.result == 'success' || needs.owner-live.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
