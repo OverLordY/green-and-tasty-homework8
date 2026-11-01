@@ -6,6 +6,10 @@ on:
         description: Run disposable authenticated owner API checks
         type: boolean
         default: false
+      run_owner_waiter_live:
+        description: Run owner and waiter UI test (leaves a submitted test reservation)
+        type: boolean
+        default: false
   push:
   pull_request:
 
@@ -91,6 +95,38 @@ jobs:
         if: always()
         with:
           name: owner-live-report
+          path: |
+            playwright-report/
+            test-results/junit.xml
+          retention-days: 7
+  owner-waiter-live:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_owner_waiter_live
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_URL: ${{ vars.BASE_URL }}
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
+      OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+      OWNER_PASSWORD: ${{ secrets.OWNER_PASSWORD }}
+      WAITER_EMAIL: ${{ secrets.WAITER_EMAIL }}
+      WAITER_PASSWORD: ${{ secrets.WAITER_PASSWORD }}
+      RUN_SUBMIT_LIVE: '1'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Require test settings
+        run: test -n "$BASE_URL" && test -n "$API_BASE_URL" && test -n "$OWNER_EMAIL" && test -n "$OWNER_PASSWORD" && test -n "$WAITER_EMAIL" && test -n "$WAITER_PASSWORD"
+      - run: npm run test:owner-waiter-live
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owner-waiter-live-report
           path: |
             playwright-report/
             test-results/junit.xml

@@ -38,6 +38,16 @@ orders or replace the required full end-to-end UI scenario. The guest uses an
 unroutable example.invalid address; the application may still attempt to send
 an organizer notification as part of the removal flow.
 
+An experimental opt-in `RUN_SUBMIT_LIVE=1 npm run test:owner-waiter-live`
+adds a confirmed owner dish and a separate unconfirmed guest dish, submits in
+the owner UI, and checks the waiter receipt. Once submitted, the test
+reservation cannot be automatically cancelled and remains in the test
+environment. CI dispatch `run_owner_waiter_live` requires `OWNER_EMAIL`,
+`OWNER_PASSWORD`, `WAITER_EMAIL`, and `WAITER_PASSWORD` secrets; this CI path
+has not yet been validated. This does not replace the required confirmed-guest
+removal journey. A separate diagnostic `waiter-receipt-live.spec.js` may be run
+manually with `EXISTING_TEST_RESERVATION` to inspect an existing test receipt.
+
 The project is a test environment. Full E2E coverage must use isolated
 fixtures and an approved way to obtain guest confirmations without publishing
 credentials, tokens, or personal links. The two pipeline jobs completed
