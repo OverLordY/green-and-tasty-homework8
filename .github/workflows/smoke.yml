@@ -1,6 +1,11 @@
 name: Smoke tests
 on:
   workflow_dispatch:
+    inputs:
+      run_owner_live:
+        description: Run disposable authenticated owner API checks
+        type: boolean
+        default: false
   push:
   pull_request:
 
@@ -59,4 +64,34 @@ jobs:
           name: backend-test-report
           path: application/backend/Restaurant.Api.Tests/TestResults/*.trx
           if-no-files-found: ignore
+          retention-days: 7
+  owner-live:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_owner_live
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_URL: ${{ vars.BASE_URL }}
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
+      OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+      OWNER_PASSWORD: ${{ secrets.OWNER_PASSWORD }}
+      RUN_OWNER_LIVE: '1'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Require test settings
+        run: test -n "$BASE_URL" && test -n "$API_BASE_URL" && test -n "$OWNER_EMAIL" && test -n "$OWNER_PASSWORD"
+      - run: npm run test:owner-live
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owner-live-report
+          path: |
+            playwright-report/
+            test-results/junit.xml
           retention-days: 7

@@ -6,6 +6,7 @@
     "test": "playwright test",
     "test:smoke": "playwright test --grep @smoke",
     "test:level3": "playwright test --grep @level3",
+    "test:owner-live": "playwright test tests/api/owner-live.spec.js",
     "report": "playwright show-report"
   },
   "devDependencies": {
