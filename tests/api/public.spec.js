@@ -33,6 +33,12 @@ test('@smoke an anonymous visitor cannot read a group or submit an order', async
   expect([401, 403]).toContain(submit.status());
 });
 
+test('@level3 unauthenticated requests cannot delete a participant', async ({ request }) => {
+  // Both identifiers are synthetic: no existing reservation or order is changed.
+  const response = await request.delete(`${api}/guest/groups/automation-nonexistent-group/sessions/automation-nonexistent-guest`);
+  expect([401, 403]).toContain(response.status());
+});
+
 test('@smoke recovery does not reveal whether an unknown order exists', async ({ request }) => {
   const response = await request.post(`${api}/guest/orders/nonexistent-automation-order/request-access`, {
     data: { email: 'nobody@example.invalid' },

@@ -5,6 +5,7 @@
   "scripts": {
     "test": "playwright test",
     "test:smoke": "playwright test --grep @smoke",
+    "test:level3": "playwright test --grep @level3",
     "report": "playwright show-report"
   },
   "devDependencies": {

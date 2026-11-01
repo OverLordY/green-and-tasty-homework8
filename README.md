@@ -20,6 +20,10 @@ Artifacts contain the HTML/JUnit and TRX reports. Anonymous UI smoke tests also
 attach a screenshot on failure; screenshots, traces and videos remain disabled
 by default for future authenticated tests because pages may contain access links.
 
+Run `npm run test:level3` for the deployed API check that rejects anonymous
+participant deletion. It uses invented identifiers and cannot delete a real
+guest. This single negative check does not constitute Level 3 completion.
+
 The project is a test environment. Authenticated E2E coverage must use isolated
 fixtures and an approved way to obtain guest confirmations without publishing
 credentials, tokens, or personal links. The two pipeline jobs completed

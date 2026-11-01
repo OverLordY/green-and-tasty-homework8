@@ -25,7 +25,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Require deployed endpoints
         run: test -n "$BASE_URL" && test -n "$API_BASE_URL"
-      - run: npm run test:smoke
+      - name: Run deployed smoke and Level 3 checks
+        run: npm test
       - uses: actions/upload-artifact@v4
         if: always()
         with:
