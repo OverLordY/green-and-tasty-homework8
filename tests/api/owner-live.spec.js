@@ -10,11 +10,11 @@ test('@level3 owner deletion validates membership and the last guest', async ({ 
   await page.goto('/login');
   await page.getByRole('button', { name: 'Увійти', exact: true }).click();
   if (process.env.OWNER_EMAIL && process.env.OWNER_PASSWORD) {
-    await page.locator('input[name="username"]').fill(process.env.OWNER_EMAIL);
-    await page.locator('input[name="password"]').fill(process.env.OWNER_PASSWORD);
-    await page.locator('input[name="password"]').press('Enter');
+    await page.locator('input[name="username"]:visible').fill(process.env.OWNER_EMAIL, { timeout: 10000 });
+    await page.locator('input[name="password"]:visible').fill(process.env.OWNER_PASSWORD, { timeout: 10000 });
+    await page.locator('button[type="submit"]:visible, input[type="submit"]:visible').click({ timeout: 10000 });
   }
-  await page.waitForURL(url => url.origin === process.env.BASE_URL && !url.pathname.startsWith('/auth/'), { timeout: 120000 });
+  await page.waitForURL(url => url.origin === process.env.BASE_URL && !url.pathname.startsWith('/auth/'), { timeout: process.env.OWNER_EMAIL && process.env.OWNER_PASSWORD ? 30000 : 120000 });
   const token = await page.evaluate(() => JSON.parse(localStorage.getItem('auth') || '{}').idToken);
   if (!token) throw new Error('Owner login did not produce an ID token');
   const auth = { Authorization: `Bearer ${token}` };

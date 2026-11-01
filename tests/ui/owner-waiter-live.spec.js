@@ -14,13 +14,13 @@ test('@level3 owner submits and waiter sees only confirmed dishes', async ({ bro
     await page.getByRole('button', { name: 'Увійти', exact: true }).click();
     const email = process.env[`${role}_EMAIL`], password = process.env[`${role}_PASSWORD`];
     if (email && password) {
-      await page.locator('input[name="username"]').fill(email);
-      await page.locator('input[name="password"]').fill(password);
-      await page.locator('input[name="password"]').press('Enter');
+      await page.locator('input[name="username"]:visible').fill(email, { timeout: 10000 });
+      await page.locator('input[name="password"]:visible').fill(password, { timeout: 10000 });
+      await page.locator('button[type="submit"]:visible, input[type="submit"]:visible').click({ timeout: 10000 });
     } else {
       console.log(`WAIT_FOR_${role}_LOGIN`);
     }
-    await page.waitForURL(url => url.origin === process.env.BASE_URL && !url.pathname.startsWith('/auth/'), { timeout: 240000 });
+    await page.waitForURL(url => url.origin === process.env.BASE_URL && !url.pathname.startsWith('/auth/'), { timeout: email && password ? 30000 : 240000 });
     const token = await page.evaluate(() => JSON.parse(localStorage.getItem('auth') || '{}').idToken);
     if (!token) throw new Error(`${role} login did not produce an ID token`);
     return { page, context, auth: { Authorization: `Bearer ${token}` } };
