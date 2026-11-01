@@ -52,3 +52,15 @@ fixtures and an approved way to obtain guest confirmations without publishing
 credentials, tokens, or personal links. The owner deletion and owner-to-waiter
 jobs have both passed in GitHub Actions, in separate workflow runs. The full
 confirmed-guest Level 3 journey remains unfinished.
+
+An email-backed journey is prepared in `confirmed-guests-live.spec.js`: two
+guests each order a different dish and confirm it using a real email link;
+the owner removes the first confirmed guest and submits the remainder, and the
+waiter checks the receipt. It is opt-in (`run_confirmed_guests` in Actions),
+requires secrets `GUEST_EMAIL` and `GMAIL_APP_PASSWORD` in addition to the role
+credentials, and has not yet been run end to end. Use a dedicated verified SES
+test mailbox: a Gmail app password grants broad mailbox access even though the
+test searches read-only for the unique order ID and downloads matching messages
+only. Screenshots/traces are disabled for this scenario; do not commit or paste
+confirmation links. As with the other submit scenario, a submitted reservation
+remains in the test environment and no automatic retry is performed.

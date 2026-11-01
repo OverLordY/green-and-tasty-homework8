@@ -8,9 +8,12 @@
     "test:level3": "playwright test --grep @level3",
     "test:owner-live": "playwright test tests/api/owner-live.spec.js",
     "test:owner-waiter-live": "playwright test tests/ui/owner-waiter-live.spec.js",
+    "test:confirmed-guests": "playwright test tests/ui/confirmed-guests-live.spec.js",
     "report": "playwright show-report"
   },
   "devDependencies": {
-    "@playwright/test": "1.64.1"
+    "@playwright/test": "1.64.1",
+    "imapflow": "^2.10.0",
+    "mailparser": "^3.14.1"
   }
 }
