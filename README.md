@@ -16,8 +16,9 @@ existing compatible browser. The workflow requires GitHub repository variables
 `owner/repository` of the final application. The backend job checks out that
 repository and runs its existing .NET integration/domain suite; those tests use
 an in-memory backend and do not replace the required deployed UI E2E scenarios.
-Artifacts contain the HTML/JUnit and TRX reports; traces,
-screenshots and videos are disabled because test pages may contain access links.
+Artifacts contain the HTML/JUnit and TRX reports. Anonymous UI smoke tests also
+attach a screenshot on failure; screenshots, traces and videos remain disabled
+by default for future authenticated tests because pages may contain access links.
 
 The project is a test environment. Authenticated E2E coverage must use isolated
 fixtures and an approved way to obtain guest confirmations without publishing

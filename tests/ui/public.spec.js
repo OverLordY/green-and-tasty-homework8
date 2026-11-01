@@ -1,5 +1,9 @@
 const { test, expect } = require('@playwright/test');
 
+// These anonymous pages contain no login credentials or confirmation links.
+// Keep a screenshot on failure to make CI failures actionable.
+test.use({ screenshot: 'only-on-failure' });
+
 test.skip(!process.env.BASE_URL, 'Set BASE_URL to the deployed frontend.');
 
 test('@smoke visitor can open the table-search screen', async ({ page }) => {

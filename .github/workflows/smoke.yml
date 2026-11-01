@@ -33,6 +33,7 @@ jobs:
           path: |
             playwright-report/
             test-results/junit.xml
+            test-results/**/*.png
           retention-days: 7
   backend-integration:
     runs-on: ubuntu-latest
