@@ -5,8 +5,8 @@ by feature; no browser credentials or email links are stored in the repository.
 
 This suite is **not a completed Level 3 assignment**. It checks public catalog,
 anonymous protection, table search, an invalid invitation and, when explicitly
-enabled, authenticated owner deletion. Guest confirmation, group submission and
-waiter verification are not yet automated end to end.
+enabled, owner deletion and submission with waiter receipt. Email confirmation
+and deletion of a confirmed guest are not yet automated on the deployed app.
 
 Set `BASE_URL` and `API_BASE_URL` in your environment, then run `npm ci` and
 `npm run test:smoke`. Install the Playwright browser with
@@ -43,13 +43,12 @@ adds a confirmed owner dish and a separate unconfirmed guest dish, submits in
 the owner UI, and checks the waiter receipt. Once submitted, the test
 reservation cannot be automatically cancelled and remains in the test
 environment. CI dispatch `run_owner_waiter_live` requires `OWNER_EMAIL`,
-`OWNER_PASSWORD`, `WAITER_EMAIL`, and `WAITER_PASSWORD` secrets; this CI path
-has not yet been validated. This does not replace the required confirmed-guest
+`OWNER_PASSWORD`, `WAITER_EMAIL`, and `WAITER_PASSWORD` secrets. This does not replace the required confirmed-guest
 removal journey. A separate diagnostic `waiter-receipt-live.spec.js` may be run
 manually with `EXISTING_TEST_RESERVATION` to inspect an existing test receipt.
 
 The project is a test environment. Full E2E coverage must use isolated
 fixtures and an approved way to obtain guest confirmations without publishing
-credentials, tokens, or personal links. The two pipeline jobs completed
-successfully on GitHub Actions: deployed smoke checks and the application's
-backend test suite. The authenticated Level 3 UI journey remains unfinished.
+credentials, tokens, or personal links. The owner deletion and owner-to-waiter
+jobs have both passed in GitHub Actions, in separate workflow runs. The full
+confirmed-guest Level 3 journey remains unfinished.
