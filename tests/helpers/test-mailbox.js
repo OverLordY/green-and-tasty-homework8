@@ -41,7 +41,10 @@ async function waitForConfirmationLink({ orderId, expectedOrigin, since, timeout
     } finally { lock.release(); }
   } catch (error) {
     if (error.message === 'Confirmation email did not arrive before the timeout') throw error;
-    throw new Error('Could not read the test mailbox; check Gmail app password and IMAP access');
+    // Avoid leaking provider responses or message content into public CI logs.
+    const code = typeof error.code === 'string' && /^[A-Z0-9_]{1,32}$/.test(error.code) ? error.code : 'UNKNOWN';
+    const reason = error.authenticationFailed ? 'AUTHENTICATION' : code;
+    throw new Error(`Could not read the test mailbox (${reason}); check Gmail app password and IMAP access`);
   } finally { try { await client.logout(); } catch { client.close(); } }
 }
 

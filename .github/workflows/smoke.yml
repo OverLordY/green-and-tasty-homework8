@@ -14,6 +14,10 @@ on:
         description: Run email-backed guest E2E (leaves a submitted test reservation)
         type: boolean
         default: false
+      run_mailbox_check:
+        description: Check test Gmail read-only connection without creating an order
+        type: boolean
+        default: false
   push:
   pull_request:
 
@@ -171,3 +175,20 @@ jobs:
             playwright-report/
             test-results/junit.xml
           retention-days: 7
+  mailbox-check:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_mailbox_check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GUEST_EMAIL: ${{ secrets.GUEST_EMAIL }}
+      GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+      RUN_MAILBOX_CHECK: '1'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright test tests/api/mailbox-connection.spec.js
