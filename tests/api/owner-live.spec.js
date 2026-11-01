@@ -50,19 +50,26 @@ test('@level3 owner deletion validates membership and the last guest', async ({ 
       const details = await request.get(`${base}/guest/invites/${inviteToken}`);
       expect(details.status()).toBe(200);
       const group = (await details.json()).GroupReservationId;
+      const guestName = `AQA ${crypto.randomUUID()}`;
       const draft = await request.post(`${base}/guest/orders/`, { data: {
-        inviteToken, guestName: `AQA ${crypto.randomUUID()}`, email: 'automation@example.invalid',
+        inviteToken, guestName, email: 'automation@example.invalid',
       }});
       expect(draft.status()).toBe(201);
-      groups.push({ group, guest: (await draft.json()).orderId });
+      groups.push({ group, guest: (await draft.json()).orderId, guestName });
     }
     const route = id => `${base}/guest/groups/${groups[0].group}/sessions/${id}`;
     expect((await request.delete(route(groups[1].guest), { headers: auth })).status()).toBe(400);
     expect((await request.delete(route(`missing-${crypto.randomUUID()}`), { headers: auth })).status()).toBe(404);
     expect([401, 403]).toContain((await request.delete(route(groups[0].guest))).status());
-    const deleted = await request.delete(route(groups[0].guest), { headers: auth });
+    await page.goto(`/reservations/${reservations[0]}/group-order`);
+    await expect(page.getByRole('heading', { name: `Guest: ${groups[0].guestName}` })).toBeVisible();
+    await page.getByRole('button', { name: `Remove ${groups[0].guestName}` }).click();
+    const deletion = page.waitForResponse(response => response.url() === route(groups[0].guest) && response.request().method() === 'DELETE');
+    await page.getByRole('button', { name: 'Remove Guest', exact: true }).last().click();
+    const deleted = await deletion;
     expect(deleted.status()).toBe(200);
     const snapshot = await deleted.json();
+    await expect(page.getByRole('heading', { name: `Guest: ${groups[0].guestName}` })).toHaveCount(0);
     expect(snapshot.participants.some(person => person.id === groups[0].guest)).toBeFalsy();
     expect(snapshot.participants.filter(person => person.type === 'Guest')).toHaveLength(0);
     expect(snapshot.total).toBe(0);
