@@ -26,22 +26,26 @@ async function waitForConfirmationLink({ orderId, expectedOrigin, since, timeout
     const lock = await client.getMailboxLock('INBOX', { readOnly: true });
     try {
       const end = Date.now() + timeoutMs;
+      let maxCandidates = 0;
+      let exactSubjects = 0;
       while (Date.now() < end) {
         const ids = await client.search({ since, subject: 'Green & Tasty' }, { uid: true });
+        maxCandidates = Math.max(maxCandidates, (ids || []).length);
         for (const uid of (ids || []).slice(-10).reverse()) {
           const message = await client.fetchOne(uid, { source: true }, { uid: true });
           if (!message?.source) continue;
           const parsed = await simpleParser(message.source);
           if (parsed.subject !== 'Підтвердження замовлення Green & Tasty') continue;
+          exactSubjects++;
           const link = selectConfirmationLink(parsed.text, orderId, expectedOrigin);
           if (link) return link;
         }
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
-      throw new Error('Confirmation email did not arrive before the timeout');
+      throw new Error(`Confirmation email not matched (candidates: ${maxCandidates}, matching subjects: ${exactSubjects})`);
     } finally { lock.release(); }
   } catch (error) {
-    if (error.message === 'Confirmation email did not arrive before the timeout') throw error;
+    if (error.message.startsWith('Confirmation email not matched')) throw error;
     // Avoid leaking provider responses or message content into public CI logs.
     const code = typeof error.code === 'string' && /^[A-Z0-9_]{1,32}$/.test(error.code) ? error.code : 'UNKNOWN';
     const reason = error.authenticationFailed ? 'AUTHENTICATION' : code;

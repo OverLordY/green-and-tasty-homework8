@@ -86,6 +86,7 @@ jobs:
       API_BASE_URL: ${{ vars.API_BASE_URL }}
       OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
       OWNER_PASSWORD: ${{ secrets.OWNER_PASSWORD }}
+      GUEST_EMAIL: ${{ secrets.GUEST_EMAIL }}
       RUN_OWNER_LIVE: '1'
       CI: 'true'
     steps:
@@ -97,7 +98,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Require test settings
-        run: test -n "$BASE_URL" && test -n "$API_BASE_URL" && test -n "$OWNER_EMAIL" && test -n "$OWNER_PASSWORD"
+        run: test -n "$BASE_URL" && test -n "$API_BASE_URL" && test -n "$OWNER_EMAIL" && test -n "$OWNER_PASSWORD" && test -n "$GUEST_EMAIL"
       - run: npm run test:owner-live
       - uses: actions/upload-artifact@v4
         if: always()

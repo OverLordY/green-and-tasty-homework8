@@ -29,14 +29,14 @@ logs in through Cognito, creates two disposable reservations and draft guests,
 checks cross-group (400), missing guest (404), anonymous deletion (401/403),
 and removes the last guest in the real UI, then cancels both reservations in cleanup. An owner
 participant remains in the group, so the guest list is empty and total is zero.
-Set `OWNER_EMAIL` and `OWNER_PASSWORD` to run unattended. For manual login,
+Set `GUEST_EMAIL` to an SES-verified test mailbox, and `OWNER_EMAIL` and
+`OWNER_PASSWORD` to run unattended. For manual login,
 omit both, run Playwright with `--headed`, and sign in within two minutes.
 To use CI, configure those two values as GitHub Actions secrets and select
 `run_owner_live` in the workflow dispatch. Never enable this on an untrusted
 deployment; it creates real reservations. The test does not confirm guest
-orders or replace the required full end-to-end UI scenario. The guest uses an
-unroutable example.invalid address; the application may still attempt to send
-an organizer notification as part of the removal flow.
+orders or replace the required full end-to-end UI scenario. The application may
+send test notifications to the guest and organizer as part of the removal flow.
 
 An experimental opt-in `RUN_SUBMIT_LIVE=1 npm run test:owner-waiter-live`
 adds a confirmed owner dish and a separate unconfirmed guest dish, submits in

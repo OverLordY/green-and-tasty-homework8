@@ -6,7 +6,7 @@ test.skip(process.env.RUN_OWNER_LIVE !== '1', 'Set RUN_OWNER_LIVE=1 for disposab
 test('@level3 owner deletion validates membership and the last guest', async ({ page, request }) => {
   test.setTimeout(180000);
   const base = process.env.API_BASE_URL;
-  if (!base || !process.env.BASE_URL) throw new Error('BASE_URL and API_BASE_URL are required');
+  if (!base || !process.env.BASE_URL || !process.env.GUEST_EMAIL) throw new Error('BASE_URL, API_BASE_URL and GUEST_EMAIL are required');
   await page.goto('/login');
   await page.getByRole('button', { name: 'Увійти', exact: true }).click();
   if (process.env.OWNER_EMAIL && process.env.OWNER_PASSWORD) {
@@ -52,7 +52,7 @@ test('@level3 owner deletion validates membership and the last guest', async ({ 
       const group = (await details.json()).GroupReservationId;
       const guestName = `AQA ${crypto.randomUUID()}`;
       const draft = await request.post(`${base}/guest/orders/`, { data: {
-        inviteToken, guestName, email: 'automation@example.invalid',
+        inviteToken, guestName, email: process.env.GUEST_EMAIL,
       }});
       expect(draft.status()).toBe(201);
       groups.push({ group, guest: (await draft.json()).orderId, guestName });
