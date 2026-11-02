@@ -85,6 +85,15 @@ test('@level3 confirmed guests: remove one, submit, verify waiter receipt', asyn
     const before = await beforeResponse.json();
     expect(before.participants.filter(p => guests.some(g => g.id === p.id) && p.isSubmitted)).toHaveLength(2);
     expect(before.total).toBeCloseTo(guests[0].dish.price + guests[1].dish.price, 2);
+    const money = amount => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    const total = owner.page.locator('.grand-total strong');
+    await expect(total).toHaveText(money(before.total));
+    for (const guest of guests) {
+      const card = owner.page.locator('article.participant-card').filter({ has: owner.page.getByRole('heading', { name: `Guest: ${guest.name}` }) });
+      await expect(card.getByText(guest.dish.name, { exact: true })).toBeVisible();
+      await expect(card.locator('.status')).toContainText('Підтверджено');
+      await expect(card.locator('.subtotal')).toContainText(money(guest.dish.price));
+    }
     await owner.page.getByRole('button', { name: `Remove ${guests[0].name}` }).click();
     const deletion = owner.page.waitForResponse(r => r.url().endsWith(`/guest/groups/${group}/sessions/${guests[0].id}`) && r.request().method() === 'DELETE');
     await owner.page.getByRole('button', { name: 'Remove Guest', exact: true }).last().click();
@@ -94,6 +103,7 @@ test('@level3 confirmed guests: remove one, submit, verify waiter receipt', asyn
     expect(after.participants.some(p => p.id === guests[0].id)).toBeFalsy();
     expect(after.participants.some(p => p.id === guests[1].id && p.isSubmitted)).toBeTruthy();
     expect(after.total).toBeCloseTo(guests[1].dish.price, 2);
+    await expect(total).toHaveText(money(guests[1].dish.price));
     await expect(owner.page.getByRole('heading', { name: `Guest: ${guests[0].name}` })).toHaveCount(0);
     await expect(owner.page.getByRole('heading', { name: `Guest: ${guests[1].name}` })).toBeVisible();
     await expect(owner.page.getByText(`${guests[1].dish.name} × 1`)).toBeVisible();
@@ -104,6 +114,12 @@ test('@level3 confirmed guests: remove one, submit, verify waiter receipt', asyn
     expect(sent.status()).toBe(200);
     submitted = true;
     expect(await sent.json()).toEqual([{ dishId: guests[1].dish.id, quantity: 1 }]);
+    const snapshotResponse = await request.get(`${base}/guest/groups/${group}/sessions`, { headers: owner.auth });
+    expect(snapshotResponse.status()).toBe(200);
+    const snapshot = await snapshotResponse.json();
+    const again = await request.post(`${base}/group-reservations/${group}/submit`, { headers: owner.auth,
+      data: { reservationId, expectedVersion: snapshot.version } });
+    expect([400, 409]).toContain(again.status());
     console.log(`PERSISTENT_TEST_RESERVATION=${reservationId}`);
     const waiter = await login('WAITER');
     try {
@@ -113,6 +129,8 @@ test('@level3 confirmed guests: remove one, submit, verify waiter receipt', asyn
       const receipt = await request.get(`${base}/restaurant/reservations/${reservationId}/pre-order`, { headers: waiter.auth });
       expect(receipt.status()).toBe(200);
       expect((await receipt.json()).items.map(item => item.dishId)).toEqual([guests[1].dish.id]);
+      const forbidden = await request.delete(`${base}/guest/groups/${group}/sessions/${guests[1].id}`, { headers: waiter.auth });
+      expect(forbidden.status()).toBe(403);
     } finally { await waiter.context.close(); }
   } finally {
     if (reservationId && !submitted) {
