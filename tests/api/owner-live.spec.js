@@ -76,6 +76,11 @@ test('@level3 owner deletion validates membership and the last guest', async ({ 
     const other = await request.get(`${base}/guest/groups/${groups[1].group}/sessions`, { headers: auth });
     expect(other.status()).toBe(200);
     expect((await other.json()).participants.some(person => person.id === groups[1].guest)).toBeTruthy();
+  } catch (error) {
+    if (/\/reservations\/[^/]+\/group-order$/.test(new URL(page.url()).pathname)) {
+      try { await test.info().attach('owner-group-failure', { body: await page.screenshot({ timeout: 5000 }), contentType: 'image/png' }); } catch { /* preserve original failure */ }
+    }
+    throw error;
   } finally {
     const cleanupFailures = [];
     for (const id of reservations) {

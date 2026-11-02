@@ -51,6 +51,13 @@ test('@level3 confirmed guests: remove one, submit, verify waiter receipt', asyn
     const inviteResponse2 = await request.get(`${base}/guest/invites/${inviteToken}`);
     expect(inviteResponse2.status()).toBe(200);
     const group = (await inviteResponse2.json()).GroupReservationId;
+    const emptyResponse = await request.get(`${base}/guest/groups/${group}/sessions`, { headers: owner.auth });
+    expect(emptyResponse.status()).toBe(200);
+    const empty = await emptyResponse.json();
+    expect(empty.participants.filter(p => p.type === 'Guest')).toHaveLength(0);
+    expect(empty.total).toBe(0);
+    const missingGroup = await request.get(`${base}/guest/groups/missing-${crypto.randomUUID()}/sessions`, { headers: owner.auth });
+    expect(missingGroup.status()).toBe(404);
     const menuResponse = await request.get(`${base}/owner/groups/${group}/menu`, { headers: owner.auth });
     expect(menuResponse.status()).toBe(200);
     const dishes = (await menuResponse.json()).items.filter(item => item.available);
@@ -62,8 +69,16 @@ test('@level3 confirmed guests: remove one, submit, verify waiter receipt', asyn
       expect(created.status()).toBe(201);
       const draft = await created.json();
       const guestAuth = { Authorization: `Bearer ${draft.draftAccessToken}` };
+      const guestGroupAccess = await request.get(`${base}/guest/groups/${group}/sessions`, { headers: guestAuth });
+      expect([401, 403]).toContain(guestGroupAccess.status());
+      const noDishes = await request.get(`${base}/guest/groups/${group}/sessions`, { headers: owner.auth });
+      expect(noDishes.status()).toBe(200);
+      expect((await noDishes.json()).participants.some(p => p.id === draft.orderId && !p.isSubmitted && p.items.length === 0)).toBeTruthy();
       expect((await request.post(`${base}/guest/orders/${draft.orderId}/dishes`, { headers: guestAuth,
         data: { dishId: dish.id, forWhom: name, quantity: 1 } })).status()).toBe(200);
+      const pending = await request.get(`${base}/guest/groups/${group}/sessions`, { headers: owner.auth });
+      expect(pending.status()).toBe(200);
+      expect((await pending.json()).participants.some(p => p.id === draft.orderId && !p.isSubmitted)).toBeTruthy();
       const since = new Date(Date.now() - 120000);
       expect((await request.post(`${base}/guest/orders/${draft.orderId}/request-confirmation`, { headers: guestAuth })).status()).toBe(202);
       const link = await waitForConfirmationLink({ orderId: draft.orderId, expectedOrigin: origin, since });
@@ -131,7 +146,17 @@ test('@level3 confirmed guests: remove one, submit, verify waiter receipt', asyn
       expect((await receipt.json()).items.map(item => item.dishId)).toEqual([guests[1].dish.id]);
       const forbidden = await request.delete(`${base}/guest/groups/${group}/sessions/${guests[1].id}`, { headers: waiter.auth });
       expect(forbidden.status()).toBe(403);
+      expect((await request.get(`${base}/guest/groups/${group}/sessions`, { headers: waiter.auth })).status()).toBe(403);
+      const waiterSubmit = await request.post(`${base}/group-reservations/${group}/submit`, { headers: waiter.auth,
+        data: { reservationId, expectedVersion: snapshot.version } });
+      expect(waiterSubmit.status()).toBe(403);
     } finally { await waiter.context.close(); }
+  } catch (error) {
+    // Capture only the owner group screen: never capture authentication or guest links.
+    if (/\/reservations\/[^/]+\/group-order$/.test(new URL(owner.page.url()).pathname)) {
+      try { await test.info().attach('owner-group-failure', { body: await owner.page.screenshot({ timeout: 5000 }), contentType: 'image/png' }); } catch { /* preserve original failure */ }
+    }
+    throw error;
   } finally {
     if (reservationId && !submitted) {
       const cleanup = await request.delete(`${base}/reservations`, { headers: owner.auth, data: { id: reservationId } });

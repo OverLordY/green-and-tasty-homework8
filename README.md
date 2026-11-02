@@ -3,6 +3,8 @@
 Direction 1: group pre-order. Approach: Playwright UI and API tests, organized
 by feature; no browser credentials or email links are stored in the repository.
 
+[Матриця вимог і фактичного покриття українською](COVERAGE_UK.md)
+
 The deployed Level 3 journey has passed in GitHub Actions: two guests confirm
 their orders by email, the owner removes one confirmed guest and submits the
 remaining order, and the waiter sees only the remaining dish. Other checks cover
@@ -18,9 +20,10 @@ existing compatible browser. The workflow requires GitHub repository variables
 `owner/repository` of the final application. The backend job checks out that
 repository and runs its existing .NET integration/domain suite; those tests use
 an in-memory backend and do not replace the required deployed UI E2E scenarios.
-Artifacts contain the HTML/JUnit and TRX reports. Anonymous UI smoke tests also
-attach a screenshot on failure; screenshots, traces and videos remain disabled
-by default for future authenticated tests because pages may contain access links.
+Artifacts contain HTML/JUnit and TRX reports. Public UI smoke tests and the
+owner group page attach a screenshot on failure. Login and guest confirmation
+pages are excluded from screenshots; traces and video are disabled because
+they may contain access links. Failures on other pages may lack visual evidence.
 
 Run `npm run test:level3` for the deployed API check that rejects anonymous
 participant deletion. It uses invented identifiers and cannot delete a real
