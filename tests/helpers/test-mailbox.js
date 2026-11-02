@@ -13,7 +13,7 @@ function selectConfirmationLink(text, orderId, expectedOrigin) {
   return null;
 }
 
-// Search server-side by subject/date; inspect only recent matching test messages.
+// Inspect recent message envelopes first; download only confirmation messages.
 // Never log message bodies, links or authentication tokens.
 async function waitForConfirmationLink({ orderId, expectedOrigin, since, timeoutMs = 180000 }) {
   if (!process.env.GUEST_EMAIL || !process.env.GMAIL_APP_PASSWORD) throw new Error('Guest mailbox credentials are missing');
@@ -29,14 +29,18 @@ async function waitForConfirmationLink({ orderId, expectedOrigin, since, timeout
       let maxCandidates = 0;
       let exactSubjects = 0;
       while (Date.now() < end) {
-        const ids = await client.search({ since, subject: 'Green & Tasty' }, { uid: true });
+        // Gmail can store MIME-encoded non-ASCII subjects, so server-side SUBJECT
+        // searches need not match their decoded appearance in the inbox.
+        const ids = await client.search({ all: true }, { uid: true });
         maxCandidates = Math.max(maxCandidates, (ids || []).length);
-        for (const uid of (ids || []).slice(-10).reverse()) {
+        for (const uid of (ids || []).slice(-50).reverse()) {
+          const header = await client.fetchOne(uid, { envelope: true }, { uid: true });
+          if (header?.envelope?.subject !== 'Підтвердження замовлення Green & Tasty') continue;
+          exactSubjects++;
           const message = await client.fetchOne(uid, { source: true }, { uid: true });
           if (!message?.source) continue;
           const parsed = await simpleParser(message.source);
           if (parsed.subject !== 'Підтвердження замовлення Green & Tasty') continue;
-          exactSubjects++;
           const link = selectConfirmationLink(parsed.text, orderId, expectedOrigin);
           if (link) return link;
         }

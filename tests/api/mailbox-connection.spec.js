@@ -10,7 +10,16 @@ test('test Gmail mailbox accepts read-only IMAP connection', async () => {
   try {
     await client.connect();
     const lock = await client.getMailboxLock('INBOX', { readOnly: true });
-    try { expect(client.mailbox.readOnly).toBeTruthy(); } finally { lock.release(); }
+    try {
+      expect(client.mailbox.readOnly).toBeTruthy();
+      const ids = await client.search({ all: true }, { uid: true });
+      let matches = 0;
+      for (const uid of (ids || []).slice(-50)) {
+        const message = await client.fetchOne(uid, { envelope: true }, { uid: true });
+        if (message?.envelope?.subject === 'Підтвердження замовлення Green & Tasty') matches++;
+      }
+      console.log(`Recent confirmation message count: ${matches}`);
+    } finally { lock.release(); }
   } catch (error) {
     const code = typeof error.code === 'string' && /^[A-Z0-9_]{1,32}$/.test(error.code) ? error.code : 'UNKNOWN';
     throw new Error(`Mailbox connection failed (${error.authenticationFailed ? 'AUTHENTICATION' : code})`);
